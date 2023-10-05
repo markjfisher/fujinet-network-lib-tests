@@ -50,12 +50,13 @@ EMUCMD :=
 # Build dir for putting final built program rather than cluttering root
 BUILD_DIR = build
 
+PREEMUCMD :=
+POSTEMUCMD :=
+VICE_HOME :=
+
 # Options state file name. You should not need to change this, but for those
 # rare cases when you feel you really need to name it differently - here you are
 STATEFILE := Makefile.options
-
-# Object Dir for writing compiled files to
-OBJDIR := obj
 
 ###################################################################################
 ####  DO NOT EDIT BELOW THIS LINE, UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!  ####
@@ -79,27 +80,27 @@ endef
 
 # Compiler and assembler flags for generating listings
 define _listing_
-  CFLAGS += --listing $(BUILD_DIR)/$$(@:.o=.lst)
-  ASFLAGS += --listing $(BUILD_DIR)/$$(@:.o=.lst)
+  CFLAGS += --listing $$(@:.o=.lst)
+  ASFLAGS += --listing $$(@:.o=.lst)
   REMOVES += $(addsuffix .lst,$(basename $(OBJECTS)))
 endef
 
 # Linker flags for generating map file
 define _mapfile_
-  LDFLAGS += --mapfile $(BUILD_DIR)/$$@.map
-  REMOVES += $(BUILD_DIR)/$(PROGRAM).map
+  LDFLAGS += --mapfile $$@.map
+  REMOVES += $(PROGRAM).map
 endef
 
 # Linker flags for generating VICE label file
 define _labelfile_
-  LDFLAGS += -Ln $(BUILD_DIR)/$$@.lbl
-  REMOVES += $(BUILD_DIR)/$(PROGRAM).lbl
+  LDFLAGS += -Ln $$@.lbl
+  REMOVES += $(PROGRAM).lbl
 endef
 
 # Linker flags for generating a debug file
 define _debugfile_
-  LDFLAGS += -Wl --dbgfile,$(BUILD_DIR)/$$@.dbg
-  REMOVES += $(BUILD_DIR)/$(PROGRAM).dbg
+  LDFLAGS += -Wl --dbgfile,$$@.dbg
+  REMOVES += $(PROGRAM).dbg
 endef
 
 ###############################################################################
@@ -124,6 +125,12 @@ ifeq ($(SRCDIR),)
   SRCDIR := src
 endif
 
+# Presume the object and dependency files to be located in the subdirectory
+# 'obj' (which will be created). Set OBJDIR to override.
+ifeq ($(OBJDIR),)
+  OBJDIR := obj
+endif
+
 TARGETOBJDIR := $(OBJDIR)/$(TARGETS)
 
 # On Windows it is mandatory to have CC65_HOME set. So do not unnecessarily
@@ -134,6 +141,47 @@ else
   CC := cl65
 endif
 
+# Default emulator commands and options for particular targets.
+# Set EMUCMD to override.
+c64_EMUCMD := $(VICE_HOME)x64 -kernal kernal -VICIIdsize -autoload
+c128_EMUCMD := $(VICE_HOME)x128 -kernal kernal -VICIIdsize -autoload
+vic20_EMUCMD := $(VICE_HOME)xvic -kernal kernal -VICdsize -autoload
+pet_EMUCMD := $(VICE_HOME)xpet -Crtcdsize -autoload
+plus4_EMUCMD := $(VICE_HOME)xplus4 -TEDdsize -autoload
+# So far there is no x16 emulator in VICE (why??) so we have to use xplus4 with -memsize option
+c16_EMUCMD := $(VICE_HOME)xplus4 -ramsize 16 -TEDdsize -autoload
+cbm510_EMUCMD := $(VICE_HOME)xcbm2 -model 510 -VICIIdsize -autoload
+cbm610_EMUCMD := $(VICE_HOME)xcbm2 -model 610 -Crtcdsize -autoload
+#atari_EMUCMD := atari800 -windowed -xl -pal -nopatchall -run
+
+ifeq '$(findstring ;,$(PATH))' ';'
+    detected_OS := Windows
+else
+    detected_OS := $(shell uname 2>/dev/null || echo Unknown)
+    detected_OS := $(patsubst CYGWIN%,Cygwin,$(detected_OS))
+    detected_OS := $(patsubst MSYS%,MSYS,$(detected_OS))
+    detected_OS := $(patsubst MINGW%,MSYS,$(detected_OS))
+endif
+
+XS := ""
+ifeq ($(detected_OS),$(filter $(detected_OS),MSYS MINGW))
+# need an eXtra Slash for altirra things
+	XS := /
+endif
+
+LBL_SYM := $(XS)/debugcmd: ".loadsym build\$(PROGRAM).$(TARGETS).lbl"
+
+ALTIRRA ?= $(ALTIRRA_HOME)/Altirra64.exe \
+  $(XS)/portable $(XS)/portablealt:altirra-debug.ini \
+  $(XS)/debug \
+  $(LBL_SYM) \
+  $(XS)/debugcmd: "bp _debug" \
+
+atari_EMUCMD := $(ALTIRRA)
+
+ifeq ($(EMUCMD),)
+  EMUCMD = $($(CC65TARGET)_EMUCMD)
+endif
 
 ###############################################################################
 ### The magic begins                                                        ###
@@ -186,7 +234,7 @@ override PROGRAM := $(PROGRAM).$(TARGETLIST)
 # Set SOURCES to something like 'src/foo.c src/bar.s'.
 # Use of assembler files with names ending differently than .s is deprecated!
 
-SOURCES += $(call rwildcard$(SRCDIR)/,*.s)
+SOURCES := $(call rwildcard,$(SRCDIR)/,*.s)
 SOURCES += $(call rwildcard,$(SRCDIR)/,*.c)
 
 # remove trailing and leading spaces.
@@ -195,7 +243,7 @@ SOURCES := $(strip $(SOURCES))
 OBJ1 := $(SOURCES:.c=.o)
 OBJECTS := $(OBJ1:.s=.o)
 # change from src/ -> obj/<target>/
-OBJECTS := $(OBJECTS:$(SRCDIR)/%=$(OBJDIR)/$(TARGETLIST))
+OBJECTS := $(OBJECTS:$(SRCDIR)/%=$(OBJDIR)/$(TARGETLIST)/%)
 
 # Set DEPENDS to something like 'obj/c64/foo.d obj/c64/bar.d'.
 DEPENDS := $(OBJECTS:.o=.d)
@@ -204,13 +252,15 @@ DEPENDS := $(OBJECTS:.o=.d)
 LIBS += $(wildcard ../libs/fujinet-network-$(TARGETLIST)_*.lib)
 
 # add common/inc, <target>/src/inc, and the root directory (for fujinet-network.[h|inc])
-ASFLAGS += --asm-include-dir $(SRCDIR)/inc --asm-include-dir ../include
-CFLAGS += --include-dir $(SRCDIR)/inc --include-dir ../include
+ASFLAGS += --asm-include-dir $(SRCDIR)/include --asm-include-dir ../include
+CFLAGS += --include-dir $(SRCDIR)/include --include-dir ../include
+
+LDFLAGS += --start-addr 0x3000
 
 .SUFFIXES:
 .PHONY: all clean dist $(PROGRAM).$(TARGETLIST)
 
-all: $(PROGRAM).$(TARGETLIST)
+all: $(PROGRAM)
 
 -include $(DEPENDS)
 -include $(STATEFILE)
@@ -254,12 +304,13 @@ $(BUILD_DIR):
 SRC_INC_DIRS := \
 	$(sort $(dir $(wildcard $(SRCDIR)/*)))
 
-# $(info $$SOURCES = ${SOURCES})
-# $(info $$OBJECTS = ${OBJECTS})
-# $(info $$SRC_INC_DIRS = ${SRC_INC_DIRS})
-# $(info $$ASFLAGS = ${ASFLAGS})
-# $(info $$TARGETOBJDIR = ${TARGETOBJDIR})
-# $(info $$TARGETLIST = ${TARGETLIST})
+# $(info $$SOURCES = $(SOURCES))
+# $(info $$OBJECTS = $(OBJECTS))
+# $(info $$SRC_INC_DIRS = $(SRC_INC_DIRS))
+# $(info $$ASFLAGS = $(ASFLAGS))
+# $(info $$TARGETOBJDIR = $(TARGETOBJDIR))
+# $(info $$TARGETLIST = $(TARGETLIST))
+# $(info $$PROGRAM = $(PROGRAM))
 
 vpath %.c $(SRC_INC_DIRS)
 
@@ -273,10 +324,15 @@ $(TARGETOBJDIR)/%.o: %.s | $(TARGETOBJDIR)
 	@$(call MKDIR,$(dir $@))
 	$(CC) -t $(TARGETLIST) -c --create-dep $(@:.o=.d) $(ASFLAGS) -o $@ $<
 
-$(BUILD_DIR)/$(PROGRAM): $(OBJECTS) | $(BUILD_DIR)
-	ar65 a $@ $(OBJECTS)
+$(BUILD_DIR)/$(PROGRAM): $(OBJECTS) $(LIBS) | $(BUILD_DIR)
+	$(CC) -t $(TARGETLIST) $(LDFLAGS) -o $@ $(patsubst %.cfg,-C %.cfg,$^)
 
 $(PROGRAM): $(BUILD_DIR)/$(PROGRAM) | $(BUILD_DIR)
+
+test: $(PROGRAM)
+	$(PREEMUCMD)
+	$(EMUCMD) $(BUILD_DIR)\\$<
+	$(POSTEMUCMD)
 
 clean:
 	$(call RMFILES,$(OBJECTS))
@@ -286,16 +342,26 @@ clean:
 
 dist: $(PROGRAM)
 	$(call MKDIR,dist/)
-	$(call RMFILES,dist/ifify-$(TARGETLIST)*)
-	cp build/$(PROGRAM) dist/ipify-$(TARGETLIST).com
+	$(call RMFILES,dist/$(PROGRAM)*)
+	cp build/$(PROGRAM) dist/$(PROGRAM).com
+
+atr: $(PROGRAM)
+	$(call MKDIR,dist/atr)
+	cp dist/$(PROGRAM).com dist/atr/ipify.com
+	$(call RMFILES,dist/*.atr)
+	dir2atr -S dist/ipify.atr dist/atr
+
+po: $(PROGRAM)
+	$(call MKDIR,dist/po)
+	cp dist/$(PROGRAM).com dist/atr/ipify
+	
 
 else # $(words $(TARGETLIST)),1
 
-all:
-	$(foreach t,$(TARGETLIST),$(MAKE) TARGETS=$t clean all dist$(NEWLINE))
+all test clean:
+	$(foreach t,$(TARGETLIST),$(MAKE) TARGETS=$t --no-print-directory clean all dist$(NEWLINE))
 
 endif # $(words $(TARGETLIST)),1
-
 
 ###################################################################
 ###  Place your additional targets in the additional Makefiles  ###

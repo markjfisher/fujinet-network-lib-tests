@@ -29,7 +29,7 @@ uint8_t network_close(char* devicespec);
  * @brief  Open Connection
  * @param  devicespec pointer to device specification of form: N:PROTO://[HOSTNAME]:PORT/PATH/.../
  * @param  mode (4=read, 8=write, 12=read/write, 13=POST, etc.)
- * @param  trans translation mode (CR/LF to other line endings)
+ * @param  trans translation mode (CR/LF to other line endings. 0=none, 1=CR, 2=LF, 3=CRLF, 4=pet-ascii)
  * @return fujinet-network error code (See FN_ERR_* values)
  */
 uint8_t network_open(char* devicespec, uint8_t mode, uint8_t trans);

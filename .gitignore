@@ -67,3 +67,6 @@ build/
 
 # IDE files
 .vscode/
+
+Makefile.options
+altirra-debug.ini
