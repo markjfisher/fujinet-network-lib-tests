@@ -20,7 +20,7 @@ void handle_err(uint8_t err, char *reason) {
 
 void main(void) {
     uint8_t err = 0;
-    printf("Fetching IP v1.3\n");
+    printf("Fetching IP v1.4\n");
     err = network_open(devspec, 12, 0);
     handle_err(err, "open");
 

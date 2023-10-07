@@ -353,7 +353,7 @@ atr: $(PROGRAM)
 
 po: $(PROGRAM)
 	$(call MKDIR,dist/po)
-	cp dist/$(PROGRAM).com dist/atr/ipify
+	cp dist/$(PROGRAM).com dist/po/ipify
 	
 
 else # $(words $(TARGETLIST)),1
