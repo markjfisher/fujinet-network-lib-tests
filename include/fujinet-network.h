@@ -1,3 +1,4 @@
+
 /**
  * @brief FujiNet Network Device Library
  * @license gpl v. 3, see LICENSE for details.
@@ -7,6 +8,19 @@
 #define FUJINET_NETWORK_H
 
 #include <stdint.h>
+
+/**
+ * The number of bytes read in the last call to network_read().
+ * This can be less than the amount asked for, if there aren't enough bytes available from target.
+ * This allows applications to add nul terminators etc.
+ */
+extern uint16_t fn_bytes_read;
+
+/**
+ * Device specific error. This is the raw code from any device errors before they are converted to
+ * simpler device-agnostic network library errors.
+ */
+extern uint8_t fn_device_error;
 
 /**
  * @brief  Get Network Device Status byte 
@@ -29,7 +43,7 @@ uint8_t network_close(char* devicespec);
  * @brief  Open Connection
  * @param  devicespec pointer to device specification of form: N:PROTO://[HOSTNAME]:PORT/PATH/.../
  * @param  mode (4=read, 8=write, 12=read/write, 13=POST, etc.)
- * @param  trans translation mode (CR/LF to other line endings. 0=none, 1=CR, 2=LF, 3=CRLF, 4=pet-ascii)
+ * @param  trans translation mode (CR/LF to other line endings; 0=none, 1=CR, 2=LF, 3=CRLF, 4=Pet)
  * @return fujinet-network error code (See FN_ERR_* values)
  */
 uint8_t network_open(char* devicespec, uint8_t mode, uint8_t trans);
@@ -81,6 +95,7 @@ uint8_t network_json_parse(char *devicespec);
  * @return fujinet-network error code (See FN_ERR_* values)
  * 
  * Assumes an open and parsed json.
+ * This uses the mode and trans values set when opening the connection for the json query.
  */
 uint8_t network_json_query(char *devicespec, char *query, char *s);
 

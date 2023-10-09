@@ -255,6 +255,12 @@ LIBS += $(wildcard ../libs/fujinet-network-$(TARGETLIST)_*.lib)
 ASFLAGS += --asm-include-dir $(SRCDIR)/include --asm-include-dir ../include
 CFLAGS += --include-dir $(SRCDIR)/include --include-dir ../include
 
+# Add -DBUILD_(TARGET) to all args for the current name.
+UPPER_TARGETLIST := $(shell echo $(TARGETLIST) | tr a-z A-Z)
+CFLAGS += -DBUILD_$(UPPER_TARGETLIST)
+ASFLAGS += -DBUILD_$(UPPER_TARGETLIST)
+LDFLAGS += -DBUILD_$(UPPER_TARGETLIST)
+
 ifeq ($(TARGETLIST),atari)
 LDFLAGS += --start-addr 0x3000
 endif
@@ -347,7 +353,7 @@ dist: $(PROGRAM)
 	$(call RMFILES,dist/$(PROGRAM)*)
 	cp build/$(PROGRAM) dist/$(PROGRAM).com
 
-atr: $(PROGRAM)
+atr: dist
 	$(call MKDIR,dist/atr)
 	cp dist/$(PROGRAM).com dist/atr/ipify.com
 	$(call RMFILES,dist/*.atr)
