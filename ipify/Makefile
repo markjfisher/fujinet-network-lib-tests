@@ -255,7 +255,9 @@ LIBS += $(wildcard ../libs/fujinet-network-$(TARGETLIST)_*.lib)
 ASFLAGS += --asm-include-dir $(SRCDIR)/include --asm-include-dir ../include
 CFLAGS += --include-dir $(SRCDIR)/include --include-dir ../include
 
+ifeq ($(TARGETLIST),atari)
 LDFLAGS += --start-addr 0x3000
+endif
 
 .SUFFIXES:
 .PHONY: all clean dist $(PROGRAM).$(TARGETLIST)
@@ -352,9 +354,10 @@ atr: $(PROGRAM)
 	dir2atr -S dist/ipify.atr dist/atr
 
 po: $(PROGRAM)
-	$(call MKDIR,dist/po)
-	cp dist/$(PROGRAM).com dist/po/ipify
-	
+	$(call RMFILES,dist/ipify*.po)
+	cp dist/$(PROGRAM).com dist/ipify
+	../apple-tools/mk-bitsy.sh dist/ipify.po TEST_IPIFY
+	../apple-tools/add-file.sh dist/ipify.po dist/ipify ipify
 
 else # $(words $(TARGETLIST)),1
 

@@ -70,3 +70,7 @@ build/
 
 Makefile.options
 altirra-debug.ini
+
+# apple-tools
+apple-tools/*.jar
+apple-tools/*.dsk
