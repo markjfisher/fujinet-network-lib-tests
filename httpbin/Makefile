@@ -11,7 +11,7 @@
 TARGETS := atari apple2
 
 # Name of the final, single-file library.
-PROGRAM := ipify
+PROGRAM := httpbin
 
 # Path(s) to additional libraries required for linking the program
 # Use only if you don't want to place copies of the libraries in SRCDIR
@@ -353,15 +353,15 @@ dist: $(PROGRAM)
 
 atr: dist
 	$(call MKDIR,dist/atr)
-	cp dist/$(PROGRAM).com dist/atr/ipify.com
+	cp dist/$(PROGRAM).com dist/atr/httpbin.com
 	$(call RMFILES,dist/*.atr)
-	dir2atr -S dist/ipify.atr dist/atr
+	dir2atr -S dist/httpbin.atr dist/atr
 
 po: dist
-	$(call RMFILES,dist/ipify*.po)
-	cp dist/$(PROGRAM).com dist/ipify
-	../apple-tools/mk-bitsy.sh dist/ipify.po TEST_IPIFY
-	../apple-tools/add-file.sh dist/ipify.po dist/ipify ipify
+	$(call RMFILES,dist/httpbin*.po)
+	cp dist/$(PROGRAM).com dist/httpbin
+	../apple-tools/mk-bitsy.sh dist/httpbin.po TEST_HTTPBIN
+	../apple-tools/add-file.sh dist/httpbin.po dist/httpbin httpbin
 
 else # $(words $(TARGETLIST)),1
 
