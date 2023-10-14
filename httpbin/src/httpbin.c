@@ -15,8 +15,9 @@
 char *httpbin = "N:HTTP://httpbin.org/";
 char url_buffer[128];
 char result[1024];
+uint8_t err = 0;
 
-void handle_err(uint8_t err, char *reason) {
+void handle_err(char *reason) {
     if (err) {
         printf("Error: %d (d: %d) %s\n", err, fn_device_error, reason);
         exit(1);
@@ -28,35 +29,41 @@ char *create_url(char *method) {
     return (char *) url_buffer;
 }
 
-void set_http_channel_mode(char *devicespec, uint8_t mode) {
+uint8_t set_http_channel_mode(char *devicespec, uint8_t mode) {
 // This demonstrates why library should have specialised functions, instead of consumers having to use ifdef
 #ifdef BUILD_APPLE2
-    // uint8_t network_ioctl(uint8_t cmd, uint8_t aux1, uint8_t aux2, char* devicespec, [void *buffer]);
-    network_ioctl('M', 0, mode, devicespec, 0);
+    // uint8_t network_ioctl(uint8_t cmd, uint8_t aux1, uint8_t aux2, char* devicespec, int16_t use_aux, void *buffer, uint16_t len);
+    return network_ioctl('M', 0, mode, devicespec, 1, 0, 2);
 #endif
 
 #ifdef BUILD_ATARI
     // uint8_t network_ioctl(uint8_t cmd, uint8_t aux1, uint8_t aux2, char* devicespec, [uint8_t dstats, uint16_t dbuf, uint16_t dbyt]);
-    network_ioctl('M', 0, mode, devicespec, 0, 0, 0);
+    return network_ioctl('M', 0, mode, devicespec, 0, 0, 0);
 #endif
 }
 
 void add_header(char *devicespec, char *header) {
-    set_http_channel_mode(devicespec, HTTP_CHAN_MODE_SET_HEADERS);
-    network_write(devicespec, (uint8_t *) header, strlen(header));
+    err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_SET_HEADERS);
+    handle_err("header chan mode");
+    err = network_write(devicespec, (uint8_t *) header, strlen(header));
+    handle_err("write header");
 }
 
-
 void post(char *devicespec, char *data) {
-    set_http_channel_mode(devicespec, HTTP_CHAN_MODE_POST_SET_DATA);
-    network_write(devicespec, (uint8_t *) data, strlen(data));
-    set_http_channel_mode(devicespec, HTTP_CHAN_MODE_BODY);
+    err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_POST_SET_DATA);
+    handle_err("post chan mode");
+    err = network_write(devicespec, (uint8_t *) data, strlen(data));
+    handle_err("post: write");
+    err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_BODY);
+    handle_err("body chan mode");
 }
 
 void body(char *devicespec, char *r, uint16_t len) {
     strcpy(r, "NO DATA");
-    set_http_channel_mode(devicespec, HTTP_CHAN_MODE_BODY);
-    network_read(devicespec, (uint8_t *) r, len);
+    err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_BODY);
+    handle_err("body chan mode");
+    err = network_read(devicespec, (uint8_t *) r, len);
+    handle_err("body read");
 }
 
 void set_json(char *devicespec) {
@@ -65,21 +72,28 @@ void set_json(char *devicespec) {
 }
 
 void main(void) {
-    uint8_t err = 0;
     char *url;
+    bzero(url_buffer, 128);
+    bzero(result, 1024);
 
     gotox(0);
-    printf("httpbin v1.0.3\n\n");
+    printf("httpbin v1.0.6\n\n");
 
     // POST JSON, get result
     url = create_url("post");
-    err = network_open(url, OPEN_MODE_HTTP_POST, OPEN_TRANS_CR);
+    printf("Post to: [%s]\n", url);
+    err = network_open(url, OPEN_MODE_HTTP_POST, OPEN_TRANS_NONE);
+    handle_err("post:open");
+
     set_json(url);
     post(url, "{\"name\":\"fenrock\"}");
-    network_json_parse(url);
+    err = network_json_parse(url);
+    handle_err("post:json parse");
     network_json_query(url, "N:/json/name", result);
+    handle_err("post:json query");
     printf("POST: name = %s\n", result);
     network_close(url);
+    handle_err("post:close");
 
     exit(0);
 }
