@@ -23,7 +23,14 @@ uint16_t conn_bw;
 uint8_t connected;
 uint8_t conn_err;
 
-char *version = "v1.2.0";
+/* Versions for testing
+1.2.1   - full code that works with atari, crashes Apple2
+1.2.1A  - no json headers anywhere, all headers/host
+1.2.1B  - no post, just put/delete (no headers still)
+1.2.1C  - no post/put, just delete (no headers still)
+*/
+
+char *version = "v1.2.1A";
 
 void main(void) {
     setup();
@@ -54,7 +61,7 @@ void test_post() {
     post(url, "{\"name\":\"fenrock\"}");
     err = network_json_parse(url);
     handle_err("post:json parse");
-    network_json_query(url, "N:/json/name", result);
+    network_json_query(url, "N:/headers/host", result);
     handle_err("post:json query");
     printf("/post   :  name=%s\n", result);
     network_close(url);
@@ -71,7 +78,7 @@ void test_put() {
     post(url, "{\"level\":11}");
     err = network_json_parse(url);
     handle_err("put:json parse");
-    network_json_query(url, "N:/json/level", result);
+    network_json_query(url, "N:/headers/host", result);
     handle_err("put:json query");
     printf("/put    : level=%s\n", result);
     network_close(url);
@@ -83,15 +90,20 @@ void test_put() {
 void test_delete() {
     // url = del_path;
     url = create_url("delete");
+    // Use DELETE with Headers mode
     err = network_open(url, OPEN_MODE_HTTP_DELETE, OPEN_TRANS_NONE);
     handle_err("del:open");
+    // Add JSON headers
+    // set_json(url);
+    // err = set_http_channel_mode(url, HTTP_CHAN_MODE_BODY);
+    // handle_err("del:body chan mode");
     err = network_json_parse(url);
-    handle_err("delete:json parse");
+    handle_err("del:json parse");
     network_json_query(url, "N:/headers/host", result);
-    handle_err("delete:json query");
+    handle_err("del:json query");
     printf("/delete :  host=%s\n", result);
     network_close(url);
-    handle_err("delete:close");
+    handle_err("del:close");
 }
 
 void handle_err(char *reason) {
@@ -127,7 +139,7 @@ void add_header(char *devicespec, char *header) {
 }
 
 void post(char *devicespec, char *data) {
-    set_json(url);
+    //set_json(url);
     err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_POST_SET_DATA);
     handle_err("post chan mode");
     err = network_write(devicespec, (uint8_t *) data, strlen(data));
