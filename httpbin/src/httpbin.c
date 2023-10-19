@@ -30,7 +30,7 @@ uint8_t conn_err;
 1.2.1C  - no post/put, just delete (no headers still)
 */
 
-char *version = "v1.2.1A";
+char *version = "v1.2.1B";
 
 void main(void) {
     setup();
@@ -38,7 +38,7 @@ void main(void) {
     printf("httpbin %s\n", version);
     printf("Base URL: %s\n", httpbin);
 
-    test_post();
+    //test_post();
     test_put();
     test_delete();
 
