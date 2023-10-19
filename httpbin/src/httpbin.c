@@ -83,13 +83,13 @@ void test_put() {
 void test_delete() {
     // url = del_path;
     url = create_url("delete");
-    del(url);
-    // err = network_json_parse(url);
-    printf("/delete :    .%s,\n", result);
-    // handle_err("delete:json parse");
-    // network_json_query(url, "N:/url", result);
-    // handle_err("delete:json query");
-    // printf("/delete :   url=%s\n", result);
+    err = network_open(url, OPEN_MODE_HTTP_DELETE, OPEN_TRANS_NONE);
+    handle_err("del:open");
+    err = network_json_parse(url);
+    handle_err("delete:json parse");
+    network_json_query(url, "N:/headers/host", result);
+    handle_err("delete:json query");
+    printf("/delete :  host=%s\n", result);
     network_close(url);
     handle_err("delete:close");
 }
@@ -134,30 +134,6 @@ void post(char *devicespec, char *data) {
     handle_err("post: write");
     err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_BODY);
     handle_err("body chan mode");
-}
-
-void del(char *devicespec) {
-    printf("deleting %s\n", devicespec);
-    #ifdef BUILD_APPLE2
-    // uint8_t network_ioctl(uint8_t cmd, uint8_t aux1, uint8_t aux2, char* devicespec, int16_t use_aux, void *buffer, uint16_t len);
-    err = network_ioctl('!', 0, 0, devicespec, 1, 0, 0);
-    #endif
-
-    debug();
-    #ifdef BUILD_ATARI
-    // uint8_t network_ioctl(uint8_t cmd, uint8_t aux1, uint8_t aux2, char* devicespec, uint8_t dstats, uint16_t dbuf, uint16_t dbyt);
-    // dbuf is used for the data sent to FN to say what the URL path is.
-    // devicespec is same, but is used for the device id. it's ioctl, we forgive it for being a tool for all
-    // dstats has to be 0x80 to send, else FN crashes(!)
-    err = network_ioctl('!', 0, 0, devicespec, 0x80, devicespec, 256);
-    #endif
-    handle_err("del: ioctl");
-    printf("checking status\n");
-    err = network_status(devicespec, &conn_bw, &connected, &conn_err);
-    handle_err("del: status");
-    printf("BW: %d, c: %d, e: %d\n", conn_bw, connected, conn_err);
-    err = network_read(devicespec, (uint8_t *) result, conn_bw);
-    handle_err("body read");
 }
 
 void body(char *devicespec, char *r, uint16_t len) {

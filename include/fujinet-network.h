@@ -117,6 +117,8 @@ uint8_t network_json_query(char *devicespec, char *query, char *s);
 #define OPEN_MODE_HTTP_GET_H    (0x0C)
 #define OPEN_MODE_HTTP_POST     (0x0D)
 #define OPEN_MODE_HTTP_PUT_H    (0x0E)
+#define OPEN_MODE_HTTP_DELETE   (0x05)
+#define OPEN_MODE_HTTP_DELETE_H (0x09)
 
 #define OPEN_TRANS_NONE         (0x00)
 #define OPEN_TRANS_CR           (0x01)
