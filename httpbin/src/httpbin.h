@@ -14,6 +14,7 @@ void body(char *devicespec, char *r, uint16_t len);
 void del(char *devicespec);
 void post(char *devicespec, char *data);
 
+void test_get_query(char *path);
 void test_delete();
 void test_post();
 void test_put();

@@ -14,7 +14,6 @@
 #include "httpbin.h"
 
 char *httpbin = "N:HTTPS://httpbin.org/";
-char *del_path = "N:HTTP://192.168.1.85:5987/delete";
 char url_buffer[128];
 char result[1024];
 uint8_t err = 0;
@@ -23,14 +22,7 @@ uint16_t conn_bw;
 uint8_t connected;
 uint8_t conn_err;
 
-/* Versions for testing
-1.2.1   - full code that works with atari, crashes Apple2
-1.2.1A  - no json headers anywhere, all headers/host
-1.2.1B  - no post, just put/delete (no headers still)
-1.2.1C  - no post/put, just delete (no headers still)
-*/
-
-char *version = "v1.2.1C";
+char *version = "v1.2.3";
 
 void main(void) {
     setup();
@@ -38,8 +30,13 @@ void main(void) {
     printf("httpbin %s\n", version);
     printf("Base URL: %s\n", httpbin);
 
-    //test_post();
-    //test_put();
+    test_get_query("");
+    test_get_query("foo");
+    test_get_query("/foo");
+    test_get_query("/headers/hostx");
+    test_get_query("/headers/host");
+    test_post();
+    test_put();
     test_delete();
 
     exit(0);
@@ -49,6 +46,21 @@ void setup() {
     bzero(url_buffer, 128);
     bzero(result, 1024);
     gotox(0);
+}
+
+void test_get_query(char *path) {
+    url = create_url("get");
+    err = network_open(url, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE);
+    handle_err("get_eq:open");
+    err = network_json_parse(url);
+    handle_err("parse");
+
+    err = network_json_query(url, path, result);
+    handle_err("get_eq:query");
+
+    printf("get: >%s<, r: >%s<\n", path, result);
+    err = network_close(url);
+    handle_err("get_eq:close json");
 }
 
 // -------------------------------------------------------------------------------
@@ -61,7 +73,7 @@ void test_post() {
     post(url, "{\"name\":\"fenrock\"}");
     err = network_json_parse(url);
     handle_err("post:json parse");
-    network_json_query(url, "N:/headers/host", result);
+    network_json_query(url, "/json/name", result);
     handle_err("post:json query");
     printf("/post   :  name=%s\n", result);
     network_close(url);
@@ -78,7 +90,7 @@ void test_put() {
     post(url, "{\"level\":11}");
     err = network_json_parse(url);
     handle_err("put:json parse");
-    network_json_query(url, "N:/headers/host", result);
+    network_json_query(url, "/json/level", result);
     handle_err("put:json query");
     printf("/put    : level=%s\n", result);
     network_close(url);
@@ -91,15 +103,15 @@ void test_delete() {
     // url = del_path;
     url = create_url("delete");
     // Use DELETE with Headers mode
-    err = network_open(url, OPEN_MODE_HTTP_DELETE, OPEN_TRANS_NONE);
+    err = network_open(url, OPEN_MODE_HTTP_DELETE_H, OPEN_TRANS_NONE);
     handle_err("del:open");
     // Add JSON headers
-    // set_json(url);
-    // err = set_http_channel_mode(url, HTTP_CHAN_MODE_BODY);
-    // handle_err("del:body chan mode");
+    set_json(url);
+    err = set_http_channel_mode(url, HTTP_CHAN_MODE_BODY);
+    handle_err("del:body chan mode");
     err = network_json_parse(url);
     handle_err("del:json parse");
-    network_json_query(url, "N:/headers/host", result);
+    network_json_query(url, "/headers/host", result);
     handle_err("del:json query");
     printf("/delete :  host=%s\n", result);
     network_close(url);
@@ -139,7 +151,7 @@ void add_header(char *devicespec, char *header) {
 }
 
 void post(char *devicespec, char *data) {
-    //set_json(url);
+    set_json(url);
     err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_POST_SET_DATA);
     handle_err("post chan mode");
     err = network_write(devicespec, (uint8_t *) data, strlen(data));
