@@ -36,6 +36,8 @@ void main(void) {
     test_get_query("/");
     test_get_query("/headers/hostx");
     test_get_query("/headers/host");
+    test_get_query("/args");
+    test_get_query("/args/foo");
     test_post();
     test_put();
     test_delete();
