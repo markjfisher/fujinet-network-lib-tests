@@ -1,6 +1,6 @@
-# ipify
+# httpbin
 
-Test JSON and TEXT reading functions by using ipify API to return user's router's IP address.
+Tests various HTTP protocols, and json parsing using fujinet-network-library.
 
 ## Building
 
@@ -13,11 +13,11 @@ Running make will build the application for all targets by default.
 $ make TARGETS=atari clean all dist atr
 ...
 creating standard SD/90k image
-Added file "dist/atr\ipify.com"
-created image "dist/ipify.atr"
+Added file "dist/atr\httpbin.com"
+created image "dist/httpbin.atr"
 ```
 
-The generated file is at `dist/ipify.atr`
+The generated file is at `dist/httpbin.atr`
 
 ### Creating APPLE ProDos Bitsy DISK image of application
 
@@ -25,4 +25,4 @@ The generated file is at `dist/ipify.atr`
 make TARGETS=apple2 clean all dist po
 ```
 
-The generated file is at `dist/ipify.po`
+The generated file is at `dist/httpbin.po`
