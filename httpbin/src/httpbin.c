@@ -30,14 +30,13 @@ void main(void) {
     printf("httpbin %s\n", version);
     printf("Base URL: %s\n", httpbin);
 
-    test_get_query("");
-    test_get_query("foo");
-    test_get_query("/foo");
-    test_get_query("/");
-    test_get_query("/headers/hostx");
-    test_get_query("/headers/host");
-    test_get_query("/args");
-    test_get_query("/args/foo");
+    start_get();                        // save us having to keep closing/reopening.
+    test_get_query("");                 // returns entire json object line by line. forces you to know structure if you use this (looking at you lobby)
+    test_get_query("/");                // returns nothing
+    test_get_query("/foo/bar");         // path doesn't exist, returns nothing
+    test_get_query("/headers/host");    // returns value from httpbin.org
+    end_get();                          // finally close resource
+
     test_post();
     test_put();
     test_delete();
@@ -51,17 +50,23 @@ void setup() {
     gotox(0);
 }
 
-void test_get_query(char *path) {
+void start_get() {
     url = create_url("get");
     err = network_open(url, OPEN_MODE_HTTP_GET, OPEN_TRANS_NONE);
     handle_err("get_eq:open");
-    err = network_json_parse(url);
-    handle_err("parse");
 
+    err = network_json_parse(url);
+    handle_err("get_eq:parse");
+}
+
+void test_get_query(char *path) {
     err = network_json_query(url, path, result);
     handle_err("get_eq:query");
 
     printf("/get >%s<, r: >%s<\n", path, result);
+}
+
+void end_get() {
     err = network_close(url);
     handle_err("get_eq:close json");
 }

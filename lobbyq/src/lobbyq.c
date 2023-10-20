@@ -30,7 +30,7 @@ void main(void) {
     printf("lobby query %s\n", version);
     printf("Base URL: %s\n", lobby);
 
-    do_query("N:\x9b");
+    do_query("");
 
     exit(0);
 }
