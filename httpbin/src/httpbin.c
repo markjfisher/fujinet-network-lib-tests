@@ -33,6 +33,7 @@ void main(void) {
     test_get_query("");
     test_get_query("foo");
     test_get_query("/foo");
+    test_get_query("/");
     test_get_query("/headers/hostx");
     test_get_query("/headers/host");
     test_post();
@@ -58,7 +59,7 @@ void test_get_query(char *path) {
     err = network_json_query(url, path, result);
     handle_err("get_eq:query");
 
-    printf("get: >%s<, r: >%s<\n", path, result);
+    printf("/get >%s<, r: >%s<\n", path, result);
     err = network_close(url);
     handle_err("get_eq:close json");
 }
