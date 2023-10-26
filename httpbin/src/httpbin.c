@@ -22,7 +22,7 @@ uint16_t conn_bw;
 uint8_t connected;
 uint8_t conn_err;
 
-char *version = "v1.2.3";
+char *version = "v1.3.1";
 
 void main(void) {
     setup();
@@ -78,7 +78,8 @@ void test_post() {
     err = network_open(url, OPEN_MODE_HTTP_POST, OPEN_TRANS_NONE);
     handle_err("post:open");
 
-    post(url, "{\"name\":\"fenrock\"}");
+    set_json(url);
+    network_http_put(url, "{\"name\":\"fenrock\"}");
     err = network_json_parse(url);
     handle_err("post:json parse");
     network_json_query(url, "/json/name", result);
@@ -95,7 +96,8 @@ void test_put() {
     err = network_open(url, OPEN_MODE_HTTP_PUT_H, OPEN_TRANS_NONE);
     handle_err("put:open");
 
-    post(url, "{\"level\":11}");
+    set_json(url);
+    network_http_put(url, "{\"level\":11}");
     err = network_json_parse(url);
     handle_err("put:json parse");
     network_json_query(url, "/json/level", result);
@@ -108,15 +110,11 @@ void test_put() {
 // -------------------------------------------------------------------------------
 // DELETE - no data to send, but response will have data in it
 void test_delete() {
-    // url = del_path;
     url = create_url("delete");
-    // Use DELETE with Headers mode
-    err = network_open(url, OPEN_MODE_HTTP_DELETE_H, OPEN_TRANS_NONE);
+    err = network_http_delete(url, OPEN_TRANS_NONE);
     handle_err("del:open");
-    // Add JSON headers
+
     set_json(url);
-    err = set_http_channel_mode(url, HTTP_CHAN_MODE_BODY);
-    handle_err("del:body chan mode");
     err = network_json_parse(url);
     handle_err("del:json parse");
     network_json_query(url, "/headers/host", result);
@@ -151,21 +149,9 @@ uint8_t set_http_channel_mode(char *devicespec, uint8_t mode) {
     #endif
 }
 
-void add_header(char *devicespec, char *header) {
-    err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_SET_HEADERS);
-    handle_err("header chan mode");
-    err = network_write(devicespec, (uint8_t *) header, strlen(header));
-    handle_err("write header");
-}
-
 void post(char *devicespec, char *data) {
     set_json(url);
-    err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_POST_SET_DATA);
-    handle_err("post chan mode");
-    err = network_write(devicespec, (uint8_t *) data, strlen(data));
-    handle_err("post: write");
-    err = set_http_channel_mode(devicespec, HTTP_CHAN_MODE_BODY);
-    handle_err("body chan mode");
+    network_http_post(devicespec, data);
 }
 
 void body(char *devicespec, char *r, uint16_t len) {
@@ -177,6 +163,8 @@ void body(char *devicespec, char *r, uint16_t len) {
 }
 
 void set_json(char *devicespec) {
-    add_header(devicespec, "Accept: application/json");
-    add_header(devicespec, "Content-Type: application/json");
+    network_http_start_add_headers(devicespec);
+    network_http_add_header(devicespec, "Accept: application/json");
+    network_http_add_header(devicespec, "Content-Type: application/json");
+    network_http_end_add_headers(devicespec);
 }
