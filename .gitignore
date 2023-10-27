@@ -74,3 +74,5 @@ altirra-debug.ini
 # apple-tools
 apple-tools/*.jar
 apple-tools/*.dsk
+
+AppleWin.log
