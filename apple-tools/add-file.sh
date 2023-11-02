@@ -1,7 +1,5 @@
 #!/bin/bash
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
 if [ $# -ne 3 ]; then
   echo "Usage: $(basename $0) DISK.po FILE_TO_ADD NAME"
   echo "  Copies FILE_TO_ADD to DISK.po giving it name NAME"
@@ -26,11 +24,9 @@ if [ ! -f $INFILE ]; then
   exit 1
 fi
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source ${SCRIPT_DIR}/get-binaries.sh
+
 NAME=$3
-
-${SCRIPT_DIR}/get-binaries.sh
-
-AC="java -jar ${SCRIPT_DIR}/AppleCommander-ac-1.8.0.jar"
-ACX="java -jar ${SCRIPT_DIR}/AppleCommander-acx-1.8.0.jar"
 
 ${AC} -as ${DISKFILE} $NAME < ${INFILE}

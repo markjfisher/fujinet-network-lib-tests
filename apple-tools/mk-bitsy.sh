@@ -1,7 +1,5 @@
 #!/bin/bash
 
-SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-
 if [ $# -ne 2 ] ; then
   echo "Usage: $(basename $0) name.po VOLUMENAME"
   echo "Creates name.po and places BITSY.BOOT files on it, ready to copy applications onto."
@@ -14,6 +12,9 @@ if [ $? -eq 1 ]; then
   exit 1
 fi
 
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+source ${SCRIPT_DIR}/get-binaries.sh
+
 DISKNAME=$1
 # Convert underscores and hyphens to fullstops in the name, as they aren't allowed. Maybe others!
 VOLUMENAME=$(echo $2 | tr '_-' '.')
@@ -21,10 +22,6 @@ if [ -f $DISKNAME ] ; then
   rm $DISKNAME
 fi
 
-${SCRIPT_DIR}/get-binaries.sh
-
-AC="java -jar ${SCRIPT_DIR}/AppleCommander-ac-1.8.0.jar"
-ACX="java -jar ${SCRIPT_DIR}/AppleCommander-acx-1.8.0.jar"
 SRC_PRODOS=${SCRIPT_DIR}/ProDOS_2_4_2.dsk
 
 export ACX_DISK_NAME=${DISKNAME}
