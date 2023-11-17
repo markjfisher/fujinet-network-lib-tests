@@ -21,7 +21,7 @@ uint8_t* c500 = (uint8_t *) 0xc500;
 
 bool found_sp = false;
 
-void main(void) {
+int main(void) {
     char c;
     int id;
 
@@ -29,15 +29,29 @@ void main(void) {
 
     sp_init();
     id = sp_find_network();
-    printf("id: %d", id);
+    if (id < 0) {
+        printf("Error looking for network, errno: %d\n", -id);
+    }
+    else if (id == 0) {
+        printf("No NETWORK device found\n");
+    } else {
+        printf("NETWORK found at id: %d\n", id);
+    }
 
+    // printf("network_open\n");
     // err = network_open("N:HTTP://foo.bar:8080/", 4, 0);
     // handle_err("open");
-    // hex_dump(c500, 16);
-    c = cgetc();
-    printf("Exiting\n");
 
-    exit(0);
+    printf("network_ioctl\n");
+    err = network_ioctl('M', 0, 1, "N:HTTP://foo.bar:8080/", 1, 0, 2);
+    handle_err("network_ioctl");
+    printf("ioctl succeeded\n");
+
+    printf("Press a key to exit");
+    c = cgetc();
+    printf("\n");
+
+    return 0;
 }
 
 void handle_err(char *reason) {

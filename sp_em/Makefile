@@ -261,7 +261,9 @@ CFLAGS += -DBUILD_$(UPPER_TARGETLIST)
 ASFLAGS += -DBUILD_$(UPPER_TARGETLIST)
 LDFLAGS += -DBUILD_$(UPPER_TARGETLIST)
 
-LDFLAGS += --start-addr 0x3000
+# We can change the start address of application here from default of 0x0804, but don't need to.
+# This is primarily for ATARI using SpartaDOS, not Apple2
+#LDFLAGS += --start-addr 0x3000
 
 .SUFFIXES:
 .PHONY: all clean dist $(PROGRAM).$(TARGETLIST)
@@ -358,6 +360,7 @@ gendebug: $(PROGRAM)
 	@echo 'bpx _main' >> build/debug.scr
 	@echo 'bpx _debug' >> build/debug.scr
 	@echo 'bpx _sp_init' >> build/debug.scr
+	@echo 'bpx _network_ioctl' >> build/debug.scr
 
 po: dist
 	$(call RMFILES,dist/sp_em*.po)
