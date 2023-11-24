@@ -7,8 +7,8 @@
 #include "fujinet-network.h"
 #include "debug.h"
 
-char *ipify_json = "N:HTTPS://api.ipify.org/?format=json";
-char *ipify_text = "N:HTTPS://api.ipify.org/";
+char *ipify_json = "N:HTTP://api.ipify.org/?format=json";
+char *ipify_text = "N:HTTP://api.ipify.org/";
 char *ip_query = "/ip";
 char result[256];
 char query[32];

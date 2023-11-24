@@ -22,8 +22,13 @@ uint8_t* c500 = (uint8_t *) 0xc500;
 bool found_sp = false;
 
 int main(void) {
-    char c;
+    char cget;
     int id;
+    int i;
+    uint16_t bw;
+    uint8_t c;
+    uint8_t err;
+    uint8_t buf[128];
 
     printf("sp emulator %s\n", version);
 
@@ -34,21 +39,40 @@ int main(void) {
     }
     else if (id == 0) {
         printf("No NETWORK device found\n");
+        return 1;
     } else {
         printf("NETWORK found at id: %d\n", id);
     }
 
-    // printf("network_open\n");
-    // err = network_open("N:HTTP://foo.bar:8080/", 4, 0);
-    // handle_err("open");
+    printf("network_open\n");
+    err = network_open("N:HTTP://foo.bar:8080/", 4, 0);
+    handle_err("open");
 
     printf("network_ioctl\n");
     err = network_ioctl('M', 0, 1, "N:HTTP://foo.bar:8080/", 1, 0, 2);
     handle_err("network_ioctl");
-    printf("ioctl succeeded\n");
+
+    printf("network_status\n");
+    err = network_status("N:HTTP://foo.bar:8080/", &bw, &c, &err);
+    handle_err("network_status");
+
+    printf("network_read\n");
+    err = network_read("N:HTTP://foo.bar:8080/", buf, 128);
+    handle_err("read");
+
+    printf("network_write\n");
+    for (i = 0; i < 128; i++) {
+      buf[i] = i;
+    }
+    err = network_write("N:HTTP://foo.bar:8080/", buf, 128);
+    handle_err("write");
+
+    printf("network_close\n");
+    err = network_close("N:HTTP://foo.bar:8080/");
+    handle_err("close");
 
     printf("Press a key to exit");
-    c = cgetc();
+    cget = cgetc();
     printf("\n");
 
     return 0;
