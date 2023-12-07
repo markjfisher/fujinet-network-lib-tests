@@ -27,14 +27,14 @@ void main(void) {
     // USING JSON ENDPOINT
     ////////////////////////////////////////////////////////////
     gotox(0);
-    printf("Fetching IP v1.5.6\n\n[%s]\n", ipify_json);
+    printf("Fetching IP v1.5.7\n\n[%s]\n", ipify_json);
     err = network_open(ipify_json, 4, 0);
     handle_err(err, "open json");
 
     err = network_json_parse(ipify_json);
     handle_err(err, "parse");
 
-    sprintf(query, "N:%s%c", ip_query, 0);
+    sprintf(query, "%s%c", ip_query, 0);
     err = network_json_query(ipify_json, query, result);
     handle_err(err, "query");
 
